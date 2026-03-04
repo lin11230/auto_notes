@@ -1,0 +1,41 @@
+# Go 編譯檔案
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Go 測試檔案
+*.test
+
+# Go 覆蓋率檔案
+*.out
+coverage.txt
+
+# Go 輸出目錄
+/bin/
+/dist/
+
+# 依賴目錄
+vendor/
+
+# IDE 設定
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# macOS 系統檔案
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# 環境變數
+.env
+.env.local
+.env.*.local
+
+# 建置產物
+notes
+auto_notes
