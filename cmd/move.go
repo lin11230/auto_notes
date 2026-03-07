@@ -29,8 +29,7 @@ var moveCmd = &cobra.Command{
 	Args: cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		if moveTargetFolder == "" {
-			fmt.Fprintln(os.Stderr, "錯誤：請指定目標資料夾 (-t, --to)")
-			os.Exit(1)
+			exitWithError("請指定目標資料夾 (-t, --to)", nil)
 		}
 
 		client := apple.NewNotesClient()
@@ -38,8 +37,7 @@ var moveCmd = &cobra.Command{
 		// Step 1: 驗證目標資料夾是否存在
 		folders, err := client.ListFolders()
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "錯誤：無法列出資料夾: %v\n", err)
-			os.Exit(1)
+			exitWithError("無法列出資料夾", err)
 		}
 
 		folderExists := false
@@ -69,7 +67,11 @@ var moveCmd = &cobra.Command{
 			if strings.HasPrefix(identifier, "x-coredata://") {
 				sourceFolder, targetFolder, err := client.MoveNote(identifier, moveTargetFolder)
 				if err != nil {
-					fmt.Fprintf(os.Stderr, "✗ 錯誤：無法移動筆記 %s: %v\n", identifier, err)
+					if debugMode {
+						fmt.Fprintf(os.Stderr, "✗ 錯誤：無法移動筆記 %s\n詳細資訊：%v\n", identifier, err)
+					} else {
+						fmt.Fprintf(os.Stderr, "✗ 錯誤：無法移動筆記 %s\n", identifier)
+					}
 					failCount++
 					continue
 				}
@@ -81,7 +83,11 @@ var moveCmd = &cobra.Command{
 			// 如果是名稱，檢查是否有多個同名筆記
 			notes, err := client.FindNotesByName(identifier)
 			if err != nil {
-				fmt.Fprintf(os.Stderr, "✗ 錯誤：無法查找筆記「%s」: %v\n", identifier, err)
+				if debugMode {
+					fmt.Fprintf(os.Stderr, "✗ 錯誤：無法查找筆記「%s」\n詳細資訊：%v\n", identifier, err)
+				} else {
+					fmt.Fprintf(os.Stderr, "✗ 錯誤：無法查找筆記「%s」\n", identifier)
+				}
 				failCount++
 				continue
 			}
@@ -95,7 +101,7 @@ var moveCmd = &cobra.Command{
 			if len(notes) > 1 {
 				// 有多個同名筆記，列出並要求使用 ID
 				fmt.Fprintf(os.Stderr, "\n錯誤：找到 %d 個名為「%s」的筆記，請使用 ID 指定：\n\n", len(notes), identifier)
-				
+
 				w := tabwriter.NewWriter(os.Stderr, 0, 0, 2, ' ', 0)
 				fmt.Fprintln(w, "#\t標題\t資料夾\tID")
 				fmt.Fprintln(w, "─\t────\t────\t──")
@@ -103,10 +109,10 @@ var moveCmd = &cobra.Command{
 					fmt.Fprintf(w, "%d\t%s\t%s\t%s\n", i+1, note.Name, note.Container, note.ID)
 				}
 				w.Flush()
-				
+
 				fmt.Fprintf(os.Stderr, "\n請使用以下指令：\n")
 				fmt.Fprintf(os.Stderr, "  notes move \"<ID>\" -t \"%s\"\n\n", moveTargetFolder)
-				
+
 				failCount++
 				hasAmbiguousNote = true
 				continue
@@ -116,7 +122,11 @@ var moveCmd = &cobra.Command{
 			note := notes[0]
 			sourceFolder, targetFolder, err := client.MoveNote(note.ID, moveTargetFolder)
 			if err != nil {
-				fmt.Fprintf(os.Stderr, "✗ 錯誤：無法移動筆記「%s」: %v\n", identifier, err)
+				if debugMode {
+					fmt.Fprintf(os.Stderr, "✗ 錯誤：無法移動筆記「%s」\n詳細資訊：%v\n", identifier, err)
+				} else {
+					fmt.Fprintf(os.Stderr, "✗ 錯誤：無法移動筆記「%s」\n", identifier)
+				}
 				failCount++
 				continue
 			}

@@ -1,6 +1,8 @@
 package apple
 
 import (
+	"fmt"
+	"strings"
 	"testing"
 )
 
@@ -140,5 +142,27 @@ func TestNewNotesClient(t *testing.T) {
 	client := NewNotesClient()
 	if client == nil {
 		t.Error("NewNotesClient() returned nil")
+	}
+}
+
+func TestListNotesScriptEscapesFolderName(t *testing.T) {
+	folder := `Dangerous "Folder" \ it's test`
+	escaped := escapeAppleScriptString(folder)
+
+	script := fmt.Sprintf(`
+		tell application "Notes"
+			set output to ""
+			repeat with eachNote in notes of folder "%s"
+				return output
+			end repeat
+		end tell
+	`, escaped)
+
+	if !strings.Contains(script, escaped) {
+		t.Fatalf("script does not contain escaped folder name")
+	}
+
+	if strings.Contains(script, `notes of folder "Dangerous "Folder" \ it's test"`) {
+		t.Fatalf("script contains unescaped folder name")
 	}
 }

@@ -39,8 +39,7 @@ var listCmd = &cobra.Command{
 		}
 
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "錯誤：無法列出筆記: %v\n", err)
-			os.Exit(1)
+			exitWithError("無法列出筆記", err)
 		}
 
 		if len(notes) == 0 {

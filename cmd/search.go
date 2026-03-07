@@ -25,8 +25,7 @@ var searchCmd = &cobra.Command{
 		client := apple.NewNotesClient()
 		notes, err := client.SearchNotes(keyword, searchFolder)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "錯誤：無法搜尋筆記: %v\n", err)
-			os.Exit(1)
+			exitWithError("無法搜尋筆記", err)
 		}
 
 		if len(notes) == 0 {

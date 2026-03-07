@@ -27,8 +27,7 @@ var folderListCmd = &cobra.Command{
 		client := apple.NewNotesClient()
 		folders, err := client.ListFolders()
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "錯誤：無法列出資料夾: %v\n", err)
-			os.Exit(1)
+			exitWithError("無法列出資料夾", err)
 		}
 
 		if len(folders) == 0 {
@@ -59,15 +58,13 @@ var folderCreateCmd = &cobra.Command{
   notes folder create --name "個人"`,
 	Run: func(cmd *cobra.Command, args []string) {
 		if folderCreateName == "" {
-			fmt.Fprintln(os.Stderr, "錯誤：請提供資料夾名稱 (-n, --name)")
-			os.Exit(1)
+			exitWithError("請提供資料夾名稱 (-n, --name)", nil)
 		}
 
 		client := apple.NewNotesClient()
 		folder, err := client.CreateFolder(folderCreateName)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "錯誤：無法建立資料夾: %v\n", err)
-			os.Exit(1)
+			exitWithError("無法建立資料夾", err)
 		}
 
 		fmt.Printf("✓ 已建立資料夾\n")

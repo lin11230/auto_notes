@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"fmt"
-	"os"
 	"strings"
 
 	"github.com/kclin/auto_notes/internal/apple"
@@ -23,8 +22,7 @@ var showCmd = &cobra.Command{
 		client := apple.NewNotesClient()
 		note, err := client.ShowNote(identifier)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "錯誤：%v\n", err)
-			os.Exit(1)
+			exitWithError("無法顯示筆記", err)
 		}
 
 		fmt.Printf("標題: %s\n", note.Name)

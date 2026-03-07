@@ -28,27 +28,23 @@ var exportCmd = &cobra.Command{
 		client := apple.NewNotesClient()
 		name, body, err := client.ExportNote(identifier)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "錯誤：%v\n", err)
-			os.Exit(1)
+			exitWithError("無法匯出筆記", err)
 		}
 
 		format := resolveExportFormat(exportFormat, exportOutput)
 		if format == "" {
-			fmt.Fprintln(os.Stderr, "錯誤：匯出格式只支援 html 或 md")
-			os.Exit(1)
+			exitWithError("匯出格式只支援 html 或 md", nil)
 		}
 
 		content, err := renderExportContent(body, format)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "錯誤：%v\n", err)
-			os.Exit(1)
+			exitWithError("無法轉換匯出內容", err)
 		}
 
 		if exportOutput != "" {
-			err := os.WriteFile(exportOutput, []byte(content), 0644)
+			err := os.WriteFile(exportOutput, []byte(content), 0600)
 			if err != nil {
-				fmt.Fprintf(os.Stderr, "錯誤：無法寫入檔案: %v\n", err)
-				os.Exit(1)
+				exitWithError("無法寫入輸出檔案", err)
 			}
 			fmt.Printf("✓ 已匯出筆記「%s」到 %s\n", name, exportOutput)
 		} else {

@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 
 	"github.com/kclin/auto_notes/internal/apple"
@@ -27,16 +26,14 @@ var createCmd = &cobra.Command{
   notes create -t "我的筆記" -b "內容" --folder "工作"`,
 	Run: func(cmd *cobra.Command, args []string) {
 		if createTitle == "" {
-			fmt.Fprintln(os.Stderr, "錯誤：請提供筆記標題 (-t, --title)")
-			os.Exit(1)
+			exitWithError("請提供筆記標題 (-t, --title)", nil)
 		}
 
 		body := createBody
 		if createFile != "" {
-			content, err := ioutil.ReadFile(createFile)
+			content, err := os.ReadFile(createFile)
 			if err != nil {
-				fmt.Fprintf(os.Stderr, "錯誤：無法讀取檔案 %s: %v\n", createFile, err)
-				os.Exit(1)
+				exitWithError("無法讀取輸入檔案", err)
 			}
 			body = string(content)
 		}
@@ -44,8 +41,7 @@ var createCmd = &cobra.Command{
 		client := apple.NewNotesClient()
 		note, err := client.CreateNote(createTitle, body, createFolder)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "錯誤：無法建立筆記: %v\n", err)
-			os.Exit(1)
+			exitWithError("無法建立筆記", err)
 		}
 
 		fmt.Printf("✓ 已建立筆記\n")

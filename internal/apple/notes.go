@@ -27,9 +27,16 @@ type Folder struct {
 // NotesClient provides methods to interact with Apple Notes via AppleScript
 type NotesClient struct{}
 
+var debugMode bool
+
 // NewNotesClient creates a new NotesClient
 func NewNotesClient() *NotesClient {
 	return &NotesClient{}
+}
+
+// SetDebug controls whether low-level AppleScript errors are exposed.
+func SetDebug(enabled bool) {
+	debugMode = enabled
 }
 
 // runAppleScript executes an AppleScript command and returns the output
@@ -41,7 +48,10 @@ func runAppleScript(script string) (string, error) {
 
 	err := cmd.Run()
 	if err != nil {
-		return "", fmt.Errorf("AppleScript error: %s", stderr.String())
+		if debugMode {
+			return "", fmt.Errorf("AppleScript error: %s", strings.TrimSpace(stderr.String()))
+		}
+		return "", fmt.Errorf("AppleScript execution failed")
 	}
 
 	return strings.TrimSpace(stdout.String()), nil
@@ -68,7 +78,7 @@ func (c *NotesClient) ListNotes(folder string) ([]Note, error) {
 				end repeat
 				return output
 			end tell
-		`, folder)
+		`, escapeAppleScriptString(folder))
 	} else {
 		script = `
 			tell application "Notes"
@@ -567,6 +577,7 @@ func (c *NotesClient) ExportNote(identifier string) (string, string, error) {
 	}
 	return note.Name, note.Body, nil
 }
+
 // FindNotesByName finds all notes with the given name
 func (c *NotesClient) FindNotesByName(name string) ([]Note, error) {
 	script := fmt.Sprintf(`

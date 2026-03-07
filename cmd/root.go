@@ -4,10 +4,12 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/kclin/auto_notes/internal/apple"
 	"github.com/spf13/cobra"
 )
 
 var appVersion = "dev"
+var debugMode bool
 
 var rootCmd = &cobra.Command{
 	Use:   "notes",
@@ -37,5 +39,9 @@ func Execute() {
 
 func init() {
 	rootCmd.Flags().BoolP("help", "h", false, "顯示說明訊息")
+	rootCmd.PersistentFlags().BoolVar(&debugMode, "debug", false, "顯示詳細錯誤資訊")
 	rootCmd.SetVersionTemplate(fmt.Sprintf("notes version %s\n", appVersion))
+	cobra.OnInitialize(func() {
+		apple.SetDebug(debugMode)
+	})
 }

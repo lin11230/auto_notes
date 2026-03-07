@@ -1,6 +1,10 @@
 package cmd
 
-import "testing"
+import (
+	"os"
+	"path/filepath"
+	"testing"
+)
 
 func TestResolveExportFormat(t *testing.T) {
 	tests := []struct {
@@ -65,5 +69,23 @@ func TestHTMLToMarkdown(t *testing.T) {
 
 	if got := htmlToMarkdown(input); got != expected {
 		t.Fatalf("htmlToMarkdown() = %q, want %q", got, expected)
+	}
+}
+
+func TestExportFilePermission(t *testing.T) {
+	tempDir := t.TempDir()
+	outputPath := filepath.Join(tempDir, "note.md")
+
+	if err := os.WriteFile(outputPath, []byte("secret"), 0600); err != nil {
+		t.Fatalf("os.WriteFile() error = %v", err)
+	}
+
+	info, err := os.Stat(outputPath)
+	if err != nil {
+		t.Fatalf("os.Stat() error = %v", err)
+	}
+
+	if got := info.Mode().Perm(); got != 0600 {
+		t.Fatalf("file permission = %#o, want %#o", got, 0600)
 	}
 }

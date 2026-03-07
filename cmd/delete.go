@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/kclin/auto_notes/internal/apple"
 	"github.com/spf13/cobra"
@@ -24,8 +23,7 @@ var deleteCmd = &cobra.Command{
 		client := apple.NewNotesClient()
 		err := client.DeleteNote(identifier, false)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "錯誤：%v\n", err)
-			os.Exit(1)
+			exitWithError("無法刪除筆記", err)
 		}
 
 		fmt.Printf("✓ 已將筆記移到「最近刪除」: %s\n", identifier)
