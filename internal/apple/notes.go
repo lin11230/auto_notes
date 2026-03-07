@@ -128,6 +128,107 @@ func (c *NotesClient) ListNotes(folder string) ([]Note, error) {
 	return noteList, nil
 }
 
+// ListNotesPaginated returns paginated notes from all notes or a specific folder
+func (c *NotesClient) ListNotesPaginated(folder string, limit int, offset int) ([]Note, error) {
+	// AppleScript arrays are 1-indexed
+	startIndex := offset + 1
+	endIndex := offset + limit
+
+	var script string
+	if folder != "" {
+		script = fmt.Sprintf(`
+			tell application "Notes"
+				set output to ""
+				set totalNotes to count of notes of folder "%s"
+				if %d > totalNotes then return ""
+				
+				set endIndex to %d
+				if endIndex > totalNotes then set endIndex to totalNotes
+				
+				set targetNotes to notes %d thru endIndex of folder "%s"
+				
+				repeat with eachNote in targetNotes
+					set noteId to id of eachNote
+					set noteName to name of eachNote
+					set noteCreated to creation date of eachNote
+					set noteModified to modification date of eachNote
+					try
+						set noteFolder to name of folder of eachNote
+					on error
+						set noteFolder to "Notes"
+					end try
+					set output to output & noteId & "|||" & noteName & "|||" & noteFolder & "|||" & (noteCreated as string) & "|||" & (noteModified as string) & "||||"
+				end repeat
+				return output
+			end tell
+		`, escapeAppleScriptString(folder), startIndex, endIndex, startIndex, escapeAppleScriptString(folder))
+	} else {
+		script = fmt.Sprintf(`
+			tell application "Notes"
+				set output to ""
+				set totalNotes to count of notes
+				if %d > totalNotes then return ""
+				
+				set endIndex to %d
+				if endIndex > totalNotes then set endIndex to totalNotes
+				
+				set targetNotes to notes %d thru endIndex
+				
+				repeat with eachNote in targetNotes
+					set noteId to id of eachNote
+					set noteName to name of eachNote
+					set noteCreated to creation date of eachNote
+					set noteModified to modification date of eachNote
+					try
+						set noteFolder to name of folder of eachNote
+					on error
+						set noteFolder to "Notes"
+					end try
+					set output to output & noteId & "|||" & noteName & "|||" & noteFolder & "|||" & (noteCreated as string) & "|||" & (noteModified as string) & "||||"
+				end repeat
+				return output
+			end tell
+		`, startIndex, endIndex, startIndex)
+	}
+
+	result, err := runAppleScript(script)
+	if err != nil {
+		return nil, err
+	}
+
+	if result == "" {
+		return []Note{}, nil
+	}
+
+	notes := strings.Split(result, "||||")
+	var noteList []Note
+
+	for _, n := range notes {
+		n = strings.TrimSpace(n)
+		if n == "" {
+			continue
+		}
+		parts := strings.Split(n, "|||")
+		if len(parts) >= 5 {
+			note := Note{
+				ID:        parts[0],
+				Name:      parts[1],
+				Container: parts[2],
+			}
+			// Parse dates
+			if t, err := parseAppleDate(parts[3]); err == nil {
+				note.CreationDate = t
+			}
+			if t, err := parseAppleDate(parts[4]); err == nil {
+				note.ModificationDate = t
+			}
+			noteList = append(noteList, note)
+		}
+	}
+
+	return noteList, nil
+}
+
 // CreateNote creates a new note with the given title and body
 func (c *NotesClient) CreateNote(title, body, folder string) (*Note, error) {
 	// Convert plain text to HTML if needed (wrap in <p> tags)
@@ -273,17 +374,33 @@ func (c *NotesClient) ShowNote(identifier string) (*Note, error) {
 func (c *NotesClient) DeleteNote(identifier string, permanent bool) error {
 	// Note: AppleScript's "delete" command moves note to trash (Recently Deleted)
 	// For permanent deletion, we need to delete from trash separately
-	script := fmt.Sprintf(`
-		tell application "Notes"
-			try
-				set foundNote to note "%s"
-				delete foundNote
-				return "DELETED"
-			on error
-				return "NOT_FOUND"
-			end try
-		end tell
-	`, escapeAppleScriptString(identifier))
+
+	var script string
+	if strings.HasPrefix(identifier, "x-coredata://") {
+		script = fmt.Sprintf(`
+			tell application "Notes"
+				try
+					set foundNote to note id "%s"
+					delete foundNote
+					return "DELETED"
+				on error
+					return "NOT_FOUND"
+				end try
+			end tell
+		`, escapeAppleScriptString(identifier))
+	} else {
+		script = fmt.Sprintf(`
+			tell application "Notes"
+				try
+					set foundNote to note "%s"
+					delete foundNote
+					return "DELETED"
+				on error
+					return "NOT_FOUND"
+				end try
+			end tell
+		`, escapeAppleScriptString(identifier))
+	}
 
 	result, err := runAppleScript(script)
 	if err != nil {
@@ -449,6 +566,122 @@ func (c *NotesClient) ExportNote(identifier string) (string, string, error) {
 		return "", "", err
 	}
 	return note.Name, note.Body, nil
+}
+// FindNotesByName finds all notes with the given name
+func (c *NotesClient) FindNotesByName(name string) ([]Note, error) {
+	script := fmt.Sprintf(`
+		tell application "Notes"
+			set output to ""
+			set foundNotes to notes whose name is "%s"
+			repeat with eachNote in foundNotes
+				set noteId to id of eachNote
+				set noteName to name of eachNote
+				try
+					set noteFolder to name of folder of eachNote
+				on error
+					set noteFolder to "Notes"
+				end try
+				set noteCreated to creation date of eachNote
+				set noteModified to modification date of eachNote
+				set output to output & noteId & "|||" & noteName & "|||" & noteFolder & "|||" & (noteCreated as string) & "|||" & (noteModified as string) & "||||"
+			end repeat
+			return output
+		end tell
+	`, escapeAppleScriptString(name))
+
+	result, err := runAppleScript(script)
+	if err != nil {
+		return nil, err
+	}
+
+	if result == "" {
+		return []Note{}, nil
+	}
+
+	notes := strings.Split(result, "||||")
+	var noteList []Note
+
+	for _, n := range notes {
+		n = strings.TrimSpace(n)
+		if n == "" {
+			continue
+		}
+		parts := strings.Split(n, "|||")
+		if len(parts) >= 5 {
+			note := Note{
+				ID:        parts[0],
+				Name:      parts[1],
+				Container: parts[2],
+			}
+			if t, err := parseAppleDate(parts[3]); err == nil {
+				note.CreationDate = t
+			}
+			if t, err := parseAppleDate(parts[4]); err == nil {
+				note.ModificationDate = t
+			}
+			noteList = append(noteList, note)
+		}
+	}
+
+	return noteList, nil
+}
+
+// MoveNote moves a note to a target folder
+// Returns: source folder name, target folder name, error
+func (c *NotesClient) MoveNote(identifier, targetFolder string) (string, string, error) {
+	var script string
+
+	// Check if identifier is an ID or name
+	if strings.HasPrefix(identifier, "x-coredata://") {
+		script = fmt.Sprintf(`
+			tell application "Notes"
+				try
+					set foundNote to note id "%s"
+					try
+						set sourceFolder to name of folder of foundNote
+					on error
+						set sourceFolder to "Notes"
+					end try
+					move foundNote to folder "%s"
+					return sourceFolder & "|||" & "%s"
+				on error errMsg
+					return "ERROR|||" & errMsg
+				end try
+			end tell
+		`, escapeAppleScriptString(identifier), escapeAppleScriptString(targetFolder), escapeAppleScriptString(targetFolder))
+	} else {
+		script = fmt.Sprintf(`
+			tell application "Notes"
+				try
+					set foundNote to note "%s"
+					try
+						set sourceFolder to name of folder of foundNote
+					on error
+						set sourceFolder to "Notes"
+					end try
+					move foundNote to folder "%s"
+					return sourceFolder & "|||" & "%s"
+				on error errMsg
+					return "ERROR|||" & errMsg
+				end try
+			end tell
+		`, escapeAppleScriptString(identifier), escapeAppleScriptString(targetFolder), escapeAppleScriptString(targetFolder))
+	}
+
+	result, err := runAppleScript(script)
+	if err != nil {
+		return "", "", err
+	}
+
+	parts := strings.Split(result, "|||")
+	if len(parts) >= 2 {
+		if parts[0] == "ERROR" {
+			return "", "", fmt.Errorf("%s", parts[1])
+		}
+		return parts[0], parts[1], nil
+	}
+
+	return "", "", fmt.Errorf("unexpected response from AppleScript")
 }
 
 // Helper functions

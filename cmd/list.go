@@ -9,7 +9,11 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var listFolder string
+var (
+	listFolder string
+	listLimit  int
+	listOffset int
+)
 
 var listCmd = &cobra.Command{
 	Use:     "list",
@@ -20,10 +24,20 @@ var listCmd = &cobra.Command{
 範例：
   notes list
   notes list --folder "工作"
+  notes list --limit 10 --offset 20
   notes ls`,
 	Run: func(cmd *cobra.Command, args []string) {
 		client := apple.NewNotesClient()
-		notes, err := client.ListNotes(listFolder)
+
+		var notes []apple.Note
+		var err error
+
+		if listLimit > 0 {
+			notes, err = client.ListNotesPaginated(listFolder, listLimit, listOffset)
+		} else {
+			notes, err = client.ListNotes(listFolder)
+		}
+
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "錯誤：無法列出筆記: %v\n", err)
 			os.Exit(1)
@@ -42,13 +56,20 @@ var listCmd = &cobra.Command{
 			fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", note.ID, truncate(note.Name, 30), note.Container, modTime)
 		}
 		w.Flush()
-		fmt.Printf("\n共 %d 則筆記\n", len(notes))
+
+		if listLimit > 0 {
+			fmt.Printf("\n顯示 %d 則筆記 (從第 %d 筆開始)\n", len(notes), listOffset+1)
+		} else {
+			fmt.Printf("\n共 %d 則筆記\n", len(notes))
+		}
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(listCmd)
 	listCmd.Flags().StringVarP(&listFolder, "folder", "F", "", "指定資料夾")
+	listCmd.Flags().IntVarP(&listLimit, "limit", "l", 0, "限制回傳的筆記數量 (分頁)")
+	listCmd.Flags().IntVarP(&listOffset, "offset", "o", 0, "跳過的筆記數量 (分頁)")
 }
 
 func truncate(s string, maxLen int) string {
