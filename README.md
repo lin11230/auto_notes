@@ -71,8 +71,24 @@ sudo mv notes /usr/local/bin/
 ### 刪除筆記
 
 ```bash
-# 刪除筆記（移到「最近刪除」）
+# 依名稱刪除筆記（移到「最近刪除」）
 ./notes delete "筆記名稱"
+
+# 依 ID 刪除筆記
+./notes delete "x-coredata://..."
+```
+
+### 移動筆記
+
+```bash
+# 移動單個筆記到指定資料夾
+./notes move "筆記名稱" -t "目標資料夾"
+
+# 批次移動多個筆記
+./notes move "筆記1" "筆記2" "筆記3" -t "工作"
+
+# 使用 ID 移動（避免同名衝突）
+./notes move "x-coredata://..." -t "個人"
 ```
 
 ### 匯出筆記
@@ -104,6 +120,7 @@ sudo mv notes /usr/local/bin/
 | `notes show` | 顯示筆記內容 |
 | `notes search` | 搜尋筆記 |
 | `notes delete` | 刪除筆記 |
+| `notes move` | 移動筆記到指定資料夾 |
 | `notes export` | 匯出筆記 |
 | `notes folder list` | 列出資料夾 |
 | `notes folder create` | 建立資料夾 |
@@ -113,11 +130,40 @@ sudo mv notes /usr/local/bin/
 - macOS（需要 Apple Notes 應用程式）
 - Go 1.21+（僅建置時需要）
 
+## 測試
+
+專案目前將測試分為兩層：
+
+- 單元測試：不依賴 Apple Notes，可在一般 `go test` 流程執行
+- 整合測試：需要 macOS、`osascript` 與可存取的 Notes.app
+
+```bash
+# 執行全部單元測試
+GOCACHE=$(pwd)/.gocache go test ./...
+
+# 執行 Apple Notes 整合測試
+GOCACHE=$(pwd)/.gocache go test -tags=integration ./internal/apple
+```
+
+目前已涵蓋的測試案例：
+
+- `escapeAppleScriptString()` 特殊字元跳脫
+- `parseAppleDate()` Apple 日期格式解析
+- `textToHTML()` 純文字轉 HTML
+- `NewNotesClient()` client 建立
+- `ListFolders()` 整合測試
+- `CreateNote()` / `DeleteNote()` 整合測試
+- `ShowNote()` 整合測試
+- `SearchNotes()` 整合測試
+- `FindNotesByName()` 整合測試
+- `MoveNote()` 整合測試
+
 ## 技術細節
 
 本工具使用 AppleScript 與 macOS Notes 應用程式通訊，支援：
 
 - 筆記的 CRUD 操作
+- 筆記移動功能
 - 資料夾管理
 - 搜尋功能
 - 匯出功能
