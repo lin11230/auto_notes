@@ -94,10 +94,16 @@ sudo mv notes /usr/local/bin/
 ### 匯出筆記
 
 ```bash
-# 匯出到檔案
-./notes export "筆記名稱" -o output.txt
+# 使用筆記 ID 匯出，避免同名筆記衝突
+./notes export "x-coredata://..." --format md -o output.md
 
-# 匯出到 stdout
+# 匯出為 Markdown
+./notes export "筆記名稱" --format md -o output.md
+
+# 匯出為 HTML
+./notes export "筆記名稱" --format html -o output.html
+
+# 未指定格式時，stdout 預設輸出 Markdown
 ./notes export "筆記名稱"
 ```
 
@@ -154,9 +160,11 @@ GOCACHE=$(pwd)/.gocache go test -tags=integration ./internal/apple
 - `ListFolders()` 整合測試
 - `CreateNote()` / `DeleteNote()` 整合測試
 - `ShowNote()` 整合測試
+- `ExportNote()` 依筆記 ID 匯出整合測試
 - `SearchNotes()` 整合測試
 - `FindNotesByName()` 整合測試
 - `MoveNote()` 整合測試
+- `export` 格式判定與 HTML/Markdown 轉換單元測試
 
 ## 技術細節
 

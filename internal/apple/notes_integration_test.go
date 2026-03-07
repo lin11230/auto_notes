@@ -107,6 +107,34 @@ func TestShowNoteIntegration(t *testing.T) {
 	}
 }
 
+// TestExportNoteByIDIntegration tests exporting a note by ID.
+func TestExportNoteByIDIntegration(t *testing.T) {
+	requireAppleNotesIntegration(t)
+
+	client := NewNotesClient()
+
+	testTitle := "Test Export Note " + time.Now().Format("20060102150405")
+	testBody := "Test body for export by ID."
+
+	createdNote, err := client.CreateNote(testTitle, testBody, "")
+	if err != nil {
+		t.Fatalf("CreateNote() error: %v", err)
+	}
+	defer client.DeleteNote(createdNote.ID, false)
+
+	name, body, err := client.ExportNote(createdNote.ID)
+	if err != nil {
+		t.Fatalf("ExportNote() error: %v", err)
+	}
+
+	if name != testTitle {
+		t.Errorf("ExportNote() name = %q, want %q", name, testTitle)
+	}
+	if !strings.Contains(body, testBody) {
+		t.Errorf("ExportNote() body does not contain expected text")
+	}
+}
+
 // TestSearchNotesIntegration tests searching notes
 func TestSearchNotesIntegration(t *testing.T) {
 	requireAppleNotesIntegration(t)

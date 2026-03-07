@@ -60,7 +60,7 @@ auto_notes/
 - [x] search.go - `notes search <關鍵字>`
 - [x] delete.go - `notes delete <名稱或ID>`
 - [x] move.go - `notes move <名稱或ID> -t <資料夾>`
-- [x] export.go - `notes export <名稱或ID> -o file.txt`
+- [x] export.go - `notes export <名稱或ID> --format <md|html> -o file`
 - [x] folder.go - `notes folder list` / `notes folder create`
 
 ### 編譯
@@ -89,9 +89,11 @@ auto_notes/
 - [x] `ListFolders()` 整合驗證
 - [x] `CreateNote()` / `DeleteNote()` 整合驗證
 - [x] `ShowNote()` 整合驗證
+- [x] `ExportNote()` 依筆記 ID 匯出整合驗證
 - [x] `SearchNotes()` 整合驗證
 - [x] `FindNotesByName()` 整合驗證
 - [x] `MoveNote()` 整合驗證
+- [x] `export` 格式判定與 HTML/Markdown 轉換
 
 ### 測試執行方式
 ```bash
@@ -140,6 +142,8 @@ go build -o notes .
 ./notes --help
 ./notes list
 ./notes create -t "測試筆記" -b "這是內容"
+./notes export "x-coredata://..." --format html -o note.html
+./notes export "測試筆記" --format md -o note.md
 ```
 
 ## 下一個 Agent 接續事項

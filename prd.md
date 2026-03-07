@@ -239,38 +239,31 @@ $ notes delete "會議記錄" --permanent
 **語法**：
 ```bash
 notes export <id|name> [options]
-notes export --folder "name" [options]
-notes export --all [options]
 ```
 
-**參數**：
+**識別方式**：
+- 筆記名稱：`notes export "會議記錄" --format md -o note.md`
+- 筆記 ID：`notes export "x-coredata://..." --format html -o note.html`
+- 當可能存在同名筆記時，應優先使用筆記 ID
+
+**目前已實作參數**：
 
 | 參數 | 簡寫 | 說明 |
 |------|------|------|
-| `--format` | `-F` | 輸出格式：`html`（預設）、`md`、`txt`、`json` |
-| `--output` | `-o` | 輸出目錄路徑 |
-| `--with-attachments` | - | 一併匯出附件 |
-| `--folder` | - | 匯出整個資料夾 |
-| `--all` | - | 匯出所有筆記 |
+| `--format` | `-f` | 輸出格式：`html` 或 `md` |
+| `--output` | `-o` | 輸出檔案路徑 |
 
-**輸出目錄結構**：
-```
-[output]/
-├── 筆記名稱/
-│   ├── 筆記名稱.html
-│   └── attachments/
-│       ├── 附件1.pdf
-│       └── 附件2.png
-```
+**規則**：
+- 若未指定 `--format`，會依輸出副檔名推斷格式
+- 若輸出到 stdout 且未指定格式，預設使用 `md`
+- 目前尚未支援 `txt`、`json`、`--folder`、`--all`、附件匯出
 
 **格式說明**：
 
 | 格式 | 說明 | 附件處理 |
 |------|------|----------|
-| `html` | HTML 格式（預設） | 建立 `attachments/` 目錄，HTML 使用相對路徑 |
-| `md` | Markdown 格式 | 轉換 HTML 為 MD，圖片使用 `![](attachments/xxx.png)` |
-| `txt` | 純文字格式 | 移除 HTML 標籤，文末列出附件清單 |
-| `json` | JSON 格式 | 結構化資料輸出，附件可選 base64 編碼 |
+| `html` | 保留 Apple Notes 回傳的 HTML 內容 | 目前未支援附件匯出 |
+| `md` | 將常見 HTML 標籤轉為 Markdown | 目前未支援附件匯出 |
 
 ---
 
@@ -392,21 +385,27 @@ auto_notes/
 ## 6. 實作階段
 
 ### 階段一：基礎功能
-- [ ] 初始化 Go module 專案結構
-- [ ] 安裝 cobra 套件
-- [ ] 實作 AppleScript 執行模組
-- [ ] 實作 create, list, show, delete 指令
+- [x] 初始化 Go module 專案結構
+- [x] 安裝 cobra 套件
+- [x] 實作 AppleScript 執行模組
+- [x] 實作 create, list, show, delete 指令
 
 ### 階段二：進階功能
-- [ ] 實作 search 指令
-- [ ] 實作 export 指令（含附件）
-- [ ] 實作 folder 相關指令
+- [x] 實作 search 指令
+- [x] 實作 export 指令（`md` / `html`）
+- [x] 實作 folder 相關指令
+- [x] 實作 move 指令
+- [ ] 支援 `stdin` 建立筆記
+- [ ] 支援 JSON 輸出
+- [ ] 補齊附件匯出能力
 
 ### 階段三：優化與文件
 - [x] 測試並優化錯誤處理
 - [x] 編寫 README 文件
 - [x] 建立單元測試與整合測試分層
 - [x] 補齊 Apple Notes 整合測試案例
+- [ ] 補強 AppleScript 注入防護
+- [ ] 補齊安裝發佈流程（`go install` / Homebrew）
 
 ### 6.1 目前測試案例
 - [x] `escapeAppleScriptString()` 特殊字元跳脫
@@ -417,6 +416,7 @@ auto_notes/
 - [x] `CreateNote()` 建立筆記
 - [x] `DeleteNote()` 刪除筆記
 - [x] `ShowNote()` 顯示筆記
+- [x] `ExportNote()` 依 ID 匯出筆記
 - [x] `SearchNotes()` 搜尋筆記
 - [x] `FindNotesByName()` 依名稱查找筆記
 - [x] `MoveNote()` 移動筆記
