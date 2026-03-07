@@ -2,8 +2,8 @@ package cmd
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/kclin/auto_notes/internal/apple"
@@ -11,6 +11,7 @@ import (
 )
 
 var exportOutput string
+var exportFormat string
 
 var exportCmd = &cobra.Command{
 	Use:   "export <筆記名稱或ID>",
@@ -19,8 +20,8 @@ var exportCmd = &cobra.Command{
 
 範例：
   notes export "我的筆記"
-  notes export "我的筆記" -o note.txt
-  notes export "我的筆記" -o note.html`,
+  notes export "我的筆記" --format md -o note.md
+  notes export "我的筆記" --format html -o note.html`,
 	Args: cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		identifier := args[0]
@@ -31,13 +32,20 @@ var exportCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		content := body
-		if !strings.HasSuffix(exportOutput, ".html") {
-			content = stripHTML(body)
+		format := resolveExportFormat(exportFormat, exportOutput)
+		if format == "" {
+			fmt.Fprintln(os.Stderr, "錯誤：匯出格式只支援 html 或 md")
+			os.Exit(1)
+		}
+
+		content, err := renderExportContent(body, format)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "錯誤：%v\n", err)
+			os.Exit(1)
 		}
 
 		if exportOutput != "" {
-			err := ioutil.WriteFile(exportOutput, []byte(content), 0644)
+			err := os.WriteFile(exportOutput, []byte(content), 0644)
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "錯誤：無法寫入檔案: %v\n", err)
 				os.Exit(1)
@@ -52,4 +60,81 @@ var exportCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(exportCmd)
 	exportCmd.Flags().StringVarP(&exportOutput, "output", "o", "", "輸出檔案路徑")
+	exportCmd.Flags().StringVarP(&exportFormat, "format", "f", "", "匯出格式：html 或 md")
+}
+
+func resolveExportFormat(flagValue, outputPath string) string {
+	if flagValue != "" {
+		return strings.ToLower(flagValue)
+	}
+
+	ext := strings.ToLower(filepath.Ext(outputPath))
+	switch ext {
+	case ".html", ".htm":
+		return "html"
+	case ".md", ".markdown":
+		return "md"
+	default:
+		if outputPath == "" {
+			return "md"
+		}
+		return ""
+	}
+}
+
+func renderExportContent(body, format string) (string, error) {
+	switch format {
+	case "html":
+		return body, nil
+	case "md":
+		return htmlToMarkdown(body), nil
+	default:
+		return "", fmt.Errorf("不支援的匯出格式: %s", format)
+	}
+}
+
+func htmlToMarkdown(html string) string {
+	replacer := strings.NewReplacer(
+		"<br>", "\n",
+		"<br/>", "\n",
+		"<br />", "\n",
+		"</p>", "\n\n",
+		"<p>", "",
+		"</div>", "\n",
+		"<div>", "",
+		"<strong>", "**",
+		"</strong>", "**",
+		"<b>", "**",
+		"</b>", "**",
+		"<em>", "*",
+		"</em>", "*",
+		"<i>", "*",
+		"</i>", "*",
+		"&nbsp;", " ",
+	)
+
+	result := replacer.Replace(html)
+
+	inTag := false
+	var clean strings.Builder
+	for _, r := range result {
+		if r == '<' {
+			inTag = true
+			continue
+		}
+		if r == '>' {
+			inTag = false
+			continue
+		}
+		if !inTag {
+			clean.WriteRune(r)
+		}
+	}
+
+	lines := strings.Split(clean.String(), "\n")
+	for i, line := range lines {
+		lines[i] = strings.TrimRight(line, " \t")
+	}
+
+	return strings.TrimSpace(strings.Join(lines, "\n"))
 }
