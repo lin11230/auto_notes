@@ -10,12 +10,12 @@ import (
 var deletePermanent bool
 
 var deleteCmd = &cobra.Command{
-	Use:   "delete <筆記名稱或ID>",
-	Short: "刪除筆記",
-	Long: `刪除指定的筆記。筆記會被移到「最近刪除」資料夾。
+	Use:   "delete <note-title-or-id>",
+	Short: "Delete a note",
+	Long: `Delete the specified note. The note will be moved to Recently Deleted.
 
-範例：
-  notes delete "我的筆記"
+Examples:
+  notes delete "My Note"
   notes delete "x-coredata://..."`,
 	Args: cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
@@ -23,14 +23,14 @@ var deleteCmd = &cobra.Command{
 		client := apple.NewNotesClient()
 		err := client.DeleteNote(identifier, false)
 		if err != nil {
-			exitWithError("無法刪除筆記", err)
+			exitWithError("unable to delete note", err)
 		}
 
-		fmt.Printf("✓ 已將筆記移到「最近刪除」: %s\n", identifier)
+		fmt.Printf("Moved note to Recently Deleted: %s\n", identifier)
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(deleteCmd)
-	deleteCmd.Flags().BoolVarP(&deletePermanent, "permanent", "p", false, "永久刪除（不移到垃圾桶）")
+	deleteCmd.Flags().BoolVarP(&deletePermanent, "permanent", "p", false, "Permanently delete instead of moving to Recently Deleted")
 }

@@ -9,12 +9,12 @@ import (
 )
 
 var showCmd = &cobra.Command{
-	Use:   "show <筆記名稱或ID>",
-	Short: "顯示筆記內容",
-	Long: `顯示指定筆記的詳細內容。
+	Use:   "show <note-title-or-id>",
+	Short: "Show note details",
+	Long: `Show the full details of a note.
 
-範例：
-  notes show "我的筆記"
+Examples:
+  notes show "My Note"
   notes show "x-coredata://..."`,
 	Args: cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
@@ -22,14 +22,14 @@ var showCmd = &cobra.Command{
 		client := apple.NewNotesClient()
 		note, err := client.ShowNote(identifier)
 		if err != nil {
-			exitWithError("無法顯示筆記", err)
+			exitWithError("unable to show note", err)
 		}
 
-		fmt.Printf("標題: %s\n", note.Name)
+		fmt.Printf("Title: %s\n", note.Name)
 		fmt.Printf("ID: %s\n", note.ID)
-		fmt.Printf("資料夾: %s\n", note.Container)
-		fmt.Printf("建立時間: %s\n", note.CreationDate.Format("2006-01-02 15:04:05"))
-		fmt.Printf("修改時間: %s\n", note.ModificationDate.Format("2006-01-02 15:04:05"))
+		fmt.Printf("Folder: %s\n", note.Container)
+		fmt.Printf("Created: %s\n", note.CreationDate.Format("2006-01-02 15:04:05"))
+		fmt.Printf("Modified: %s\n", note.ModificationDate.Format("2006-01-02 15:04:05"))
 		fmt.Println(strings.Repeat("-", 40))
 		fmt.Println(stripHTML(note.Body))
 	},

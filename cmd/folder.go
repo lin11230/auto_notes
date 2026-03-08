@@ -11,38 +11,38 @@ import (
 
 var folderCmd = &cobra.Command{
 	Use:   "folder",
-	Short: "管理資料夾",
-	Long: `管理 Apple Notes 資料夾。
+	Short: "Manage folders",
+	Long: `Manage Apple Notes folders.
 
-子指令：
-  list    列出所有資料夾
-  create  建立新資料夾`,
+Subcommands:
+  list    List all folders
+  create  Create a new folder`,
 }
 
 var folderListCmd = &cobra.Command{
 	Use:     "list",
 	Aliases: []string{"ls"},
-	Short:   "列出所有資料夾",
+	Short:   "List all folders",
 	Run: func(cmd *cobra.Command, args []string) {
 		client := apple.NewNotesClient()
 		folders, err := client.ListFolders()
 		if err != nil {
-			exitWithError("無法列出資料夾", err)
+			exitWithError("unable to list folders", err)
 		}
 
 		if len(folders) == 0 {
-			fmt.Println("沒有找到任何資料夾")
+			fmt.Println("No folders found")
 			return
 		}
 
 		w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
-		fmt.Fprintln(w, "名稱")
-		fmt.Fprintln(w, "────")
+		fmt.Fprintln(w, "Name")
+		fmt.Fprintln(w, "----")
 		for _, folder := range folders {
 			fmt.Fprintf(w, "%s\n", folder.Name)
 		}
 		w.Flush()
-		fmt.Printf("\n共 %d 個資料夾\n", len(folders))
+		fmt.Printf("\nTotal folders: %d\n", len(folders))
 	},
 }
 
@@ -50,26 +50,26 @@ var folderCreateName string
 
 var folderCreateCmd = &cobra.Command{
 	Use:   "create",
-	Short: "建立新資料夾",
-	Long: `建立新的資料夾。
+	Short: "Create a new folder",
+	Long: `Create a new folder.
 
-範例：
-  notes folder create -n "工作"
-  notes folder create --name "個人"`,
+Examples:
+  notes folder create -n "Work"
+  notes folder create --name "Personal"`,
 	Run: func(cmd *cobra.Command, args []string) {
 		if folderCreateName == "" {
-			exitWithError("請提供資料夾名稱 (-n, --name)", nil)
+			exitWithError("please provide a folder name (-n, --name)", nil)
 		}
 
 		client := apple.NewNotesClient()
 		folder, err := client.CreateFolder(folderCreateName)
 		if err != nil {
-			exitWithError("無法建立資料夾", err)
+			exitWithError("unable to create folder", err)
 		}
 
-		fmt.Printf("✓ 已建立資料夾\n")
+		fmt.Printf("Created folder successfully\n")
 		fmt.Printf("  ID: %s\n", folder.ID)
-		fmt.Printf("  名稱: %s\n", folder.Name)
+		fmt.Printf("  Name: %s\n", folder.Name)
 	},
 }
 
@@ -78,6 +78,6 @@ func init() {
 	folderCmd.AddCommand(folderListCmd)
 	folderCmd.AddCommand(folderCreateCmd)
 
-	folderCreateCmd.Flags().StringVarP(&folderCreateName, "name", "n", "", "資料夾名稱 (必填)")
+	folderCreateCmd.Flags().StringVarP(&folderCreateName, "name", "n", "", "Folder name (required)")
 	folderCreateCmd.MarkFlagRequired("name")
 }

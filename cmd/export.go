@@ -14,39 +14,39 @@ var exportOutput string
 var exportFormat string
 
 var exportCmd = &cobra.Command{
-	Use:   "export <筆記名稱或ID>",
-	Short: "匯出筆記",
-	Long: `將筆記內容匯出為檔案。預設輸出到標準輸出，可使用 -o 指定檔案。
+	Use:   "export <note-title-or-id>",
+	Short: "Export a note",
+	Long: `Export note content to a file. By default, content is printed to stdout unless -o is provided.
 
-範例：
-  notes export "我的筆記"
-  notes export "我的筆記" --format md -o note.md
-  notes export "我的筆記" --format html -o note.html`,
+Examples:
+  notes export "My Note"
+  notes export "My Note" --format md -o note.md
+  notes export "My Note" --format html -o note.html`,
 	Args: cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		identifier := args[0]
 		client := apple.NewNotesClient()
 		name, body, err := client.ExportNote(identifier)
 		if err != nil {
-			exitWithError("無法匯出筆記", err)
+			exitWithError("unable to export note", err)
 		}
 
 		format := resolveExportFormat(exportFormat, exportOutput)
 		if format == "" {
-			exitWithError("匯出格式只支援 html 或 md", nil)
+			exitWithError("export format only supports html or md", nil)
 		}
 
 		content, err := renderExportContent(body, format)
 		if err != nil {
-			exitWithError("無法轉換匯出內容", err)
+			exitWithError("unable to render export content", err)
 		}
 
 		if exportOutput != "" {
 			err := os.WriteFile(exportOutput, []byte(content), 0600)
 			if err != nil {
-				exitWithError("無法寫入輸出檔案", err)
+				exitWithError("unable to write output file", err)
 			}
-			fmt.Printf("✓ 已匯出筆記「%s」到 %s\n", name, exportOutput)
+			fmt.Printf("Exported note %q to %s\n", name, exportOutput)
 		} else {
 			fmt.Println(content)
 		}
@@ -55,8 +55,8 @@ var exportCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(exportCmd)
-	exportCmd.Flags().StringVarP(&exportOutput, "output", "o", "", "輸出檔案路徑")
-	exportCmd.Flags().StringVarP(&exportFormat, "format", "f", "", "匯出格式：html 或 md")
+	exportCmd.Flags().StringVarP(&exportOutput, "output", "o", "", "Output file path")
+	exportCmd.Flags().StringVarP(&exportFormat, "format", "f", "", "Export format: html or md")
 }
 
 func resolveExportFormat(flagValue, outputPath string) string {
@@ -85,7 +85,7 @@ func renderExportContent(body, format string) (string, error) {
 	case "md":
 		return htmlToMarkdown(body), nil
 	default:
-		return "", fmt.Errorf("不支援的匯出格式: %s", format)
+		return "", fmt.Errorf("unsupported export format: %s", format)
 	}
 }
 

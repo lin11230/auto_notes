@@ -13,17 +13,17 @@ var debugMode bool
 
 var rootCmd = &cobra.Command{
 	Use:   "notes",
-	Short: "CLI 工具用於管理 Apple Notes",
-	Long: `notes 是一個命令列工具，透過 AppleScript 管理 macOS 本機的 Notes 應用程式。
+	Short: "CLI tool for managing Apple Notes",
+	Long: `notes is a command-line tool for managing the macOS Notes app through AppleScript.
 
-支援的功能：
-  • 建立新筆記
-  • 列出筆記
-  • 查看筆記內容
-  • 搜尋筆記
-  • 刪除筆記
-  • 匯出筆記
-  • 管理資料夾`,
+Supported features:
+  • Create notes
+  • List notes
+  • Show note details
+  • Search notes
+  • Delete notes
+  • Export notes
+  • Manage folders`,
 }
 
 func SetVersion(v string) {
@@ -38,8 +38,8 @@ func Execute() {
 }
 
 func init() {
-	rootCmd.Flags().BoolP("help", "h", false, "顯示說明訊息")
-	rootCmd.PersistentFlags().BoolVar(&debugMode, "debug", false, "顯示詳細錯誤資訊")
+	rootCmd.Flags().BoolP("help", "h", false, "Show help")
+	rootCmd.PersistentFlags().BoolVar(&debugMode, "debug", false, "Show detailed error output")
 	rootCmd.SetVersionTemplate(fmt.Sprintf("notes version %s\n", appVersion))
 	cobra.OnInitialize(func() {
 		apple.SetDebug(debugMode)

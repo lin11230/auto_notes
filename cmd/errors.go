@@ -7,9 +7,9 @@ import (
 
 func exitWithError(summary string, err error) {
 	if debugMode && err != nil {
-		fmt.Fprintf(os.Stderr, "錯誤：%s\n詳細資訊：%v\n", summary, err)
+		fmt.Fprintf(os.Stderr, "Error: %s\nDetails: %v\n", summary, err)
 	} else {
-		fmt.Fprintf(os.Stderr, "錯誤：%s\n", summary)
+		fmt.Fprintf(os.Stderr, "Error: %s\n", summary)
 	}
 	os.Exit(1)
 }

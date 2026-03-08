@@ -18,12 +18,12 @@ var (
 var listCmd = &cobra.Command{
 	Use:     "list",
 	Aliases: []string{"ls"},
-	Short:   "列出所有筆記",
-	Long: `列出所有 Apple Notes 或指定資料夾中的筆記。
+	Short:   "List notes",
+	Long: `List all Apple Notes or notes in a specific folder.
 
-範例：
+Examples:
   notes list
-  notes list --folder "工作"
+  notes list --folder "Work"
   notes list --limit 10 --offset 20
   notes ls`,
 	Run: func(cmd *cobra.Command, args []string) {
@@ -39,17 +39,17 @@ var listCmd = &cobra.Command{
 		}
 
 		if err != nil {
-			exitWithError("無法列出筆記", err)
+			exitWithError("unable to list notes", err)
 		}
 
 		if len(notes) == 0 {
-			fmt.Println("沒有找到任何筆記")
+			fmt.Println("No notes found")
 			return
 		}
 
 		w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
-		fmt.Fprintln(w, "ID\t標題\t資料夾\t修改時間")
-		fmt.Fprintln(w, "──\t────\t──────\t────────")
+		fmt.Fprintln(w, "ID\tTitle\tFolder\tModified")
+		fmt.Fprintln(w, "--\t-----\t------\t--------")
 		for _, note := range notes {
 			modTime := note.ModificationDate.Format("2006-01-02 15:04")
 			fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", note.ID, truncate(note.Name, 30), note.Container, modTime)
@@ -57,18 +57,18 @@ var listCmd = &cobra.Command{
 		w.Flush()
 
 		if listLimit > 0 {
-			fmt.Printf("\n顯示 %d 則筆記 (從第 %d 筆開始)\n", len(notes), listOffset+1)
+			fmt.Printf("\nShowing %d notes (starting from %d)\n", len(notes), listOffset+1)
 		} else {
-			fmt.Printf("\n共 %d 則筆記\n", len(notes))
+			fmt.Printf("\nTotal notes: %d\n", len(notes))
 		}
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(listCmd)
-	listCmd.Flags().StringVarP(&listFolder, "folder", "F", "", "指定資料夾")
-	listCmd.Flags().IntVarP(&listLimit, "limit", "l", 0, "限制回傳的筆記數量 (分頁)")
-	listCmd.Flags().IntVarP(&listOffset, "offset", "o", 0, "跳過的筆記數量 (分頁)")
+	listCmd.Flags().StringVarP(&listFolder, "folder", "F", "", "Folder name")
+	listCmd.Flags().IntVarP(&listLimit, "limit", "l", 0, "Maximum number of notes to return")
+	listCmd.Flags().IntVarP(&listOffset, "offset", "o", 0, "Number of notes to skip")
 }
 
 func truncate(s string, maxLen int) string {
