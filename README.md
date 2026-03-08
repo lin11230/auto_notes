@@ -1,181 +1,181 @@
 # Apple Notes CLI
 
-一個使用 Golang 打造的 CLI 工具，透過 AppleScript 管理 macOS 本機的 Notes 應用程式。
+A command-line tool written in Go for managing the macOS Notes app through AppleScript.
 
-## 安裝
+## Installation
 
-### 從原始碼建置
+### Build from source
 
 ```bash
-# 複製儲存庫
+# Clone the repository
 git clone https://github.com/kclin/auto_notes.git
 cd auto_notes
 
-# 編譯
+# Build
 go build -o notes .
 
-# 移動到 PATH（選用）
+# Move to PATH (optional)
 sudo mv notes /usr/local/bin/
 ```
 
-## 使用說明
+## Usage
 
-### 顯示說明
+### Help
 
 ```bash
 ./notes --help
 ./notes <command> --help
 ```
 
-### 列出筆記
+### List notes
 
 ```bash
-# 列出所有筆記
+# List all notes
 ./notes list
 ./notes ls
 
-# 列出特定資料夾的筆記
-./notes list -f "資料夾名稱"
+# List notes in a specific folder
+./notes list -f "Work"
 ```
 
-### 建立筆記
+### Create a note
 
 ```bash
-# 建立新筆記
-./notes create -t "筆記標題" -b "筆記內容"
+# Create a new note
+./notes create -t "Note title" -b "Note body"
 
-# 在特定資料夾建立筆記
-./notes create -t "筆記標題" -b "筆記內容" -f "資料夾名稱"
+# Create a note in a specific folder
+./notes create -t "Note title" -b "Note body" -f "Work"
 ```
 
-### 顯示筆記內容
+### Show a note
 
 ```bash
-# 依名稱顯示筆記
-./notes show "筆記名稱"
+# Show by note title
+./notes show "Meeting Notes"
 
-# 依 ID 顯示筆記
+# Show by note ID
 ./notes show "x-coredata://..."
 ```
 
-### 搜尋筆記
+### Search notes
 
 ```bash
-# 搜尋包含關鍵字的筆記
-./notes search "關鍵字"
+# Search all notes
+./notes search "keyword"
 
-# 在特定資料夾搜尋
-./notes search "關鍵字" -f "資料夾名稱"
+# Search within a specific folder
+./notes search "keyword" -f "Work"
 ```
 
-### 刪除筆記
+### Delete a note
 
 ```bash
-# 依名稱刪除筆記（移到「最近刪除」）
-./notes delete "筆記名稱"
+# Delete by title (moves the note to Recently Deleted)
+./notes delete "Meeting Notes"
 
-# 依 ID 刪除筆記
+# Delete by ID
 ./notes delete "x-coredata://..."
 ```
 
-### 移動筆記
+### Move notes
 
 ```bash
-# 移動單個筆記到指定資料夾
-./notes move "筆記名稱" -t "目標資料夾"
+# Move a single note
+./notes move "Meeting Notes" -t "Archive"
 
-# 批次移動多個筆記
-./notes move "筆記1" "筆記2" "筆記3" -t "工作"
+# Move multiple notes
+./notes move "Note 1" "Note 2" "Note 3" -t "Work"
 
-# 使用 ID 移動（避免同名衝突）
-./notes move "x-coredata://..." -t "個人"
+# Move by ID to avoid duplicate-title conflicts
+./notes move "x-coredata://..." -t "Personal"
 ```
 
-### 匯出筆記
+### Export notes
 
 ```bash
-# 使用筆記 ID 匯出，避免同名筆記衝突
+# Export by note ID to avoid duplicate-title conflicts
 ./notes export "x-coredata://..." --format md -o output.md
 
-# 匯出為 Markdown
-./notes export "筆記名稱" --format md -o output.md
+# Export as Markdown
+./notes export "Meeting Notes" --format md -o output.md
 
-# 匯出為 HTML
-./notes export "筆記名稱" --format html -o output.html
+# Export as HTML
+./notes export "Meeting Notes" --format html -o output.html
 
-# 未指定格式時，stdout 預設輸出 Markdown
-./notes export "筆記名稱"
+# If no format is specified and output is stdout, Markdown is used by default
+./notes export "Meeting Notes"
 ```
 
-### 資料夾管理
+### Folder management
 
 ```bash
-# 列出所有資料夾
+# List all folders
 ./notes folder list
 
-# 建立新資料夾
-./notes folder create "新資料夾名稱"
+# Create a new folder
+./notes folder create "New Folder"
 ```
 
-## 指令一覽
+## Commands
 
-| 指令 | 說明 |
+| Command | Description |
 |------|------|
-| `notes list` | 列出筆記 |
-| `notes create` | 建立筆記 |
-| `notes show` | 顯示筆記內容 |
-| `notes search` | 搜尋筆記 |
-| `notes delete` | 刪除筆記 |
-| `notes move` | 移動筆記到指定資料夾 |
-| `notes export` | 匯出筆記 |
-| `notes folder list` | 列出資料夾 |
-| `notes folder create` | 建立資料夾 |
+| `notes list` | List notes |
+| `notes create` | Create a note |
+| `notes show` | Show note details |
+| `notes search` | Search notes |
+| `notes delete` | Delete a note |
+| `notes move` | Move notes to another folder |
+| `notes export` | Export a note |
+| `notes folder list` | List folders |
+| `notes folder create` | Create a folder |
 
-## 系統需求
+## Requirements
 
-- macOS（需要 Apple Notes 應用程式）
-- Go 1.21+（僅建置時需要）
+- macOS with the Apple Notes app
+- Go 1.21+ for building from source
 
-## 測試
+## Testing
 
-專案目前將測試分為兩層：
+The project currently separates tests into two layers:
 
-- 單元測試：不依賴 Apple Notes，可在一般 `go test` 流程執行
-- 整合測試：需要 macOS、`osascript` 與可存取的 Notes.app
+- Unit tests: do not require Apple Notes and can run in a normal `go test` workflow
+- Integration tests: require macOS, `osascript`, and access to Notes.app
 
 ```bash
-# 執行全部單元測試
+# Run all unit tests
 GOCACHE=$(pwd)/.gocache go test ./...
 
-# 執行 Apple Notes 整合測試
+# Run Apple Notes integration tests
 GOCACHE=$(pwd)/.gocache go test -tags=integration ./internal/apple
 ```
 
-目前已涵蓋的測試案例：
+Current test coverage includes:
 
-- `escapeAppleScriptString()` 特殊字元跳脫
-- `parseAppleDate()` Apple 日期格式解析
-- `textToHTML()` 純文字轉 HTML
-- `NewNotesClient()` client 建立
-- `ListFolders()` 整合測試
-- `CreateNote()` / `DeleteNote()` 整合測試
-- `ShowNote()` 整合測試
-- `ExportNote()` 依筆記 ID 匯出整合測試
-- `SearchNotes()` 整合測試
-- `FindNotesByName()` 整合測試
-- `MoveNote()` 整合測試
-- `export` 格式判定與 HTML/Markdown 轉換單元測試
+- `escapeAppleScriptString()` escaping behavior
+- `parseAppleDate()` Apple date parsing
+- `textToHTML()` plain text to HTML conversion
+- `NewNotesClient()` client creation
+- `ListFolders()` integration test
+- `CreateNote()` / `DeleteNote()` integration tests
+- `ShowNote()` integration test
+- `ExportNote()` integration test by note ID
+- `SearchNotes()` integration test
+- `FindNotesByName()` integration test
+- `MoveNote()` integration test
+- `export` format resolution and HTML-to-Markdown conversion unit tests
 
-## 技術細節
+## Technical Notes
 
-本工具使用 AppleScript 與 macOS Notes 應用程式通訊，支援：
+This tool communicates with the macOS Notes app through AppleScript and currently supports:
 
-- 筆記的 CRUD 操作
-- 筆記移動功能
-- 資料夾管理
-- 搜尋功能
-- 匯出功能
+- Note CRUD operations
+- Note moves
+- Folder management
+- Search
+- Export
 
-## 授權
+## License
 
-MIT License
+MIT
